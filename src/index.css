@@ -1,12 +1,23 @@
+
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ================================
+   BASE & GLOBAL SETTINGS
+================================ */
 
 @layer base {
   :root {
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+
+    --bg-primary: #060a17;
+    --bg-card: #0d162d;
+    --accent-blue: #38bdf8;
+    --accent-purple: #8b5cf6;
+    --text-primary: #e2e8f0;
   }
 
   *,
@@ -28,8 +39,8 @@
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
-    background-color: #060a17;
-    color: #e2e8f0;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     overflow-x: clip;
   }
 
@@ -56,18 +67,13 @@
     font-family: var(--font-heading);
   }
 
-  /* Prevent grid/flex children from forcing the page wider than the viewport. */
   .grid > *,
   .flex > *,
   [class*="grid-cols"] > * {
     min-width: 0;
   }
 
-  /* Long text, URLs and labels must wrap instead of widening cards. */
-  p,
-  a,
-  button,
-  li,
+  p, a, button, li,
   h1, h2, h3, h4, h5, h6 {
     overflow-wrap: anywhere;
   }
@@ -81,22 +87,32 @@
   }
 }
 
-/* Futuristic Glows & Glassmorphism Utilities */
-.glass-panel {
+/* ================================
+   GLASSMORPHISM
+================================ */
+
+.glass-panel,
+.glass-card {
   background: rgba(13, 22, 45, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(56, 189, 248, 0.12);
+  transition:
+    transform 350ms ease,
+    box-shadow 350ms ease,
+    border-color 350ms ease;
 }
 
 .glass-panel-hover {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-panel-hover:hover {
+.glass-panel-hover:hover,
+.glass-panel:hover,
+.glass-card:hover {
   border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 10px 30px -10px rgba(14, 165, 233, 0.2);
-  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(56, 189, 248, 0.12);
+  transform: translateY(-3px);
 }
 
 .glow-blue {
@@ -107,40 +123,140 @@
   box-shadow: 0 0 40px -10px rgba(139, 92, 246, 0.3);
 }
 
+/* ================================
+   GRADIENT TEXT
+================================ */
+
 .text-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #38bdf8 100%);
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #cbd5e1 50%,
+    #38bdf8 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-cyan {
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  background: linear-gradient(
+    135deg,
+    #38bdf8 0%,
+    #818cf8 50%,
+    #c084fc 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Custom sleek scrollbar */
+/* ================================
+   PORTFOLIO PROJECT GRID
+================================ */
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+  align-items: stretch;
+}
+
+.projects-grid > * {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.projects-grid img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+.projects-grid > * {
+  height: 100%;
+}
+
+/* Project card content alignment */
+.projects-grid article,
+.projects-grid .glass-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+.projects-grid article > img,
+.projects-grid .glass-card > img {
+  flex-shrink: 0;
+}
+
+/* ================================
+   TABLET GRID
+================================ */
+
+@media (max-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* ================================
+   MOBILE GRID
+================================ */
+
+@media (max-width: 640px) {
+  .projects-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding-inline: 12px;
+  }
+
+  .projects-grid > * {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .projects-grid img {
+    width: 100%;
+  }
+}
+
+/* ================================
+   SCROLLBAR
+================================ */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: #060a17;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
 
-/* Premium Portfolio Smooth Animations */
+/* ================================
+   ANIMATIONS
+================================ */
+
 @keyframes portfolio-float {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
   50% {
     transform: translateY(-6px);
@@ -149,7 +265,7 @@
 
 @keyframes portfolio-text-float {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
   50% {
     transform: translateY(-2px);
@@ -186,20 +302,10 @@
   animation: portfolio-fade-up 700ms ease both;
 }
 
-.glass-panel,
-.glass-card {
-  transition: transform 350ms ease, box-shadow 350ms ease,
-    border-color 350ms ease;
-}
+/* ================================
+   RESPONSIVE SAFETY
+================================ */
 
-.glass-panel:hover,
-.glass-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(56, 189, 248, 0.10);
-  border-color: rgba(56, 189, 248, 0.25);
-}
-
-/* Responsive safety: keep page sections and cards inside the viewport. */
 main,
 section,
 article,
@@ -226,6 +332,10 @@ aside {
     transform: translateY(-2px);
   }
 }
+
+/* ================================
+   ACCESSIBILITY
+================================ */
 
 @media (prefers-reduced-motion: reduce) {
   *,
