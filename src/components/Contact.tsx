@@ -63,19 +63,70 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitError, setSubmitError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setIsSubmitted(false);
+    setSubmitError('');
+
+    // Send the controlled React state directly. The form inputs in this
+    // component do not use name attributes, so FormData(form) would be empty.
+    const payload = {
+      name: formData.fullName.trim(),
+      email: formData.businessEmail.trim(),
+      company: formData.companyName.trim(),
+      website: formData.websiteUrl.trim(),
+      country_timezone: formData.country.trim(),
+      service_required: formData.serviceRequired,
+      project_description: formData.projectDescription.trim(),
+      estimated_budget: formData.estimatedBudget,
+      preferred_contact_method: formData.preferredContactMethod,
+      _subject: `New portfolio inquiry from ${formData.fullName.trim()}`,
+    };
+
+    try {
+      const response = await fetch('https://formspree.io/f/xnpdnder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let result: any = {};
+      try {
+        result = await response.json();
+      } catch {
+        // Keep the HTTP status as the source of truth if the response has no JSON.
+      }
+
+      if (!response.ok || result?.errors?.length) {
+        const details = Array.isArray(result?.errors)
+          ? result.errors.map((item: { message?: string }) => item.message).filter(Boolean).join(' ')
+          : '';
+        throw new Error(details || 'Formspree could not accept your message. Please try again.');
+      }
+
       setIsSubmitted(true);
-    }, 700);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : 'Message could not be sent. Please check your connection and try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setIsSubmitted(false);
+    setSubmitError('');
     setFormData({
       fullName: '',
       businessEmail: '',
@@ -267,7 +318,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                   </div>
                   <h4 className="text-2xl font-bold text-white">Project Inquiry Received!</h4>
                   <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-                    Thank you, <strong>{formData.fullName}</strong>. Your project request for <strong>{formData.serviceRequired}</strong> has been transmitted directly to Md. Alim Ali (<strong>alimasko12@gmail.com</strong>).
+                    Thank you, <strong>{formData.fullName}</strong>. Your project request for <strong>{formData.serviceRequired}</strong> was accepted by the contact form service. Email notification delivery depends on your Formspree notification settings.
                   </p>
                   <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 max-w-sm mx-auto text-left text-xs text-slate-400 space-y-1">
                     <div><span className="text-slate-300 font-semibold">Preferred Channel:</span> {formData.preferredContactMethod}</div>
@@ -450,6 +501,12 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                   </div>
 
                   {/* Exact CTA Button: START YOUR PROJECT */}
+                  {submitError && (
+                    <div role="alert" className="p-3 rounded-xl border border-rose-500/40 bg-rose-950/40 text-rose-300 text-xs">
+                      {submitError}
+                    </div>
+                  )}
+
                   <div className="pt-3">
                     <button
                       type="submit"
@@ -462,9 +519,9 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                   </div>
 
                   <div className="pt-2 text-center text-[11px] text-slate-400">
-                    <span>Direct submission to </span>
+                    <span>Secure form submission · Email notifications configured in Formspree </span>
                     <strong className="text-slate-200">alimasko12@gmail.com</strong>
-                    <span> · No automated marketing spam · 100% Confidential</span>
+                    <span> · No automated marketing spam</span>
                   </div>
                 </form>
               )}
