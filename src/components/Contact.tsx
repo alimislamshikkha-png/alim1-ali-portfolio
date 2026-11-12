@@ -27,6 +27,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   const budgetOptions = [
@@ -63,19 +64,52 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError('');
+
+    try {
+      const response = await fetch('https://formspree.io/f/xnpdnder', {
+        method: 'POST',
+        body: new FormData(e.currentTarget),
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        let message = 'We could not send your inquiry. Please try again.';
+        try {
+          const result = await response.json();
+          if (result?.errors?.length) {
+            message = result.errors
+              .map((item: { message?: string }) => item.message)
+              .filter(Boolean)
+              .join(' ');
+          }
+        } catch {
+          // Keep the default message when the response is not JSON.
+        }
+        throw new Error(message);
+      }
+
       setIsSubmitted(true);
-    }, 700);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : 'A network error occurred. Please check your connection and try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setIsSubmitted(false);
+    setSubmitError('');
+    setErrors({});
     setFormData({
       fullName: '',
       businessEmail: '',
@@ -295,6 +329,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <input type="hidden" name="_subject" value="New Portfolio Project Inquiry" />
                   {/* Field 1 & 2: Full Name & Business Email */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -303,6 +338,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                       </label>
                       <input
                         type="text"
+                        name="fullName"
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         placeholder="e.g. Robert Vance"
@@ -319,6 +355,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                       </label>
                       <input
                         type="email"
+                        name="email"
                         value={formData.businessEmail}
                         onChange={(e) => setFormData({ ...formData, businessEmail: e.target.value })}
                         placeholder="e.g. robert@vanceenterprises.com"
@@ -338,6 +375,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                       </label>
                       <input
                         type="text"
+                        name="companyName"
                         value={formData.companyName}
                         onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                         placeholder="e.g. Vance Operations Inc."
@@ -351,6 +389,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                       </label>
                       <input
                         type="url"
+                        name="websiteUrl"
                         value={formData.websiteUrl}
                         onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
                         placeholder="e.g. https://company.com"
@@ -367,6 +406,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                       </label>
                       <input
                         type="text"
+                        name="countryTimezone"
                         value={formData.country}
                         onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                         placeholder="e.g. USA (EST), UK (GMT), Australia (AEST)"
@@ -382,6 +422,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                         6. Service Required *
                       </label>
                       <select
+                        name="serviceRequired"
                         value={formData.serviceRequired}
                         onChange={(e) => setFormData({ ...formData, serviceRequired: e.target.value })}
                         className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30"
@@ -401,6 +442,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                       7. Project Description & Task Requirements *
                     </label>
                     <textarea
+                      name="projectDescription"
                       rows={4}
                       value={formData.projectDescription}
                       onChange={(e) => setFormData({ ...formData, projectDescription: e.target.value })}
@@ -419,6 +461,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                         8. Estimated Budget (Optional)
                       </label>
                       <select
+                        name="estimatedBudget"
                         value={formData.estimatedBudget}
                         onChange={(e) => setFormData({ ...formData, estimatedBudget: e.target.value })}
                         className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30"
@@ -436,6 +479,7 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                         9. Preferred Contact Method *
                       </label>
                       <select
+                        name="preferredContactMethod"
                         value={formData.preferredContactMethod}
                         onChange={(e) => setFormData({ ...formData, preferredContactMethod: e.target.value as any })}
                         className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30"
@@ -448,6 +492,16 @@ export const Contact: React.FC<ContactProps> = ({ preselectedService }) => {
                       </select>
                     </div>
                   </div>
+
+                  {submitError && (
+                    <p
+                      role="alert"
+                      aria-live="polite"
+                      className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-xs text-rose-300"
+                    >
+                      {submitError}
+                    </p>
+                  )}
 
                   {/* Exact CTA Button: START YOUR PROJECT */}
                   <div className="pt-3">
